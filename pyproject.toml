@@ -38,10 +38,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/shahparam11/handshake-mcp"
-Repository = "https://github.com/shahparam11/handshake-mcp"
-Issues = "https://github.com/shahparam11/handshake-mcp/issues"
-Changelog = "https://github.com/shahparam11/handshake-mcp/releases"
+Homepage = "https://github.com/shahparam11/handshake-mcp-server"
+Repository = "https://github.com/shahparam11/handshake-mcp-server"
+Issues = "https://github.com/shahparam11/handshake-mcp-server/issues"
+Changelog = "https://github.com/shahparam11/handshake-mcp-server/releases"
 
 [project.scripts]
 handshake-mcp = "handshake_mcp.cli_main:main"

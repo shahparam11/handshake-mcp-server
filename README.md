@@ -42,7 +42,7 @@ uvx handshake-mcp --login
 ### From source
 
 ```bash
-git clone https://github.com/shahparam11/handshake-mcp.git
+git clone https://github.com/shahparam11/handshake-mcp-server.git
 cd handshake-mcp
 uv sync
 
