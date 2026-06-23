@@ -1,46 +1,75 @@
 [project]
 name = "handshake-mcp"
 version = "0.1.0"
-description = "MCP server for the Handshake career portal"
+description = "MCP server that gives AI assistants like Claude access to Handshake jobs, applications, and employer profiles through the user's own browser session."
 readme = "README.md"
-license = { text = "MIT" }
-requires-python = ">=3.11"
-keywords = ["mcp", "handshake", "careers", "jobs", "claude", "ai"]
+requires-python = ">=3.12,<3.15"
+authors = [
+    { name = "Param Shah", email = "yamiparam@gmail.com" }
+]
+license = "MIT"
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "llm",
+    "anthropic",
+    "claude",
+    "handshake",
+    "careers",
+    "jobs",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Topic :: Office/Business",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
 ]
 dependencies = [
-    "mcp[cli]>=1.3.0",
+    "fastmcp>=3.0.0",
     "httpx>=0.27.0",
-    "playwright>=1.40.0",
+    "patchright>=1.40.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/shahparam11/handshake-mcp"
+Repository = "https://github.com/shahparam11/handshake-mcp"
+Issues = "https://github.com/shahparam11/handshake-mcp/issues"
+Changelog = "https://github.com/shahparam11/handshake-mcp/releases"
 
 [project.scripts]
-handshake-mcp = "handshake_mcp.server:main"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.23",
-    "respx>=0.21",
-]
+handshake-mcp = "handshake_mcp.cli_main:main"
+mcp-server-handshake = "handshake_mcp.cli_main:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/handshake_mcp"]
+[tool.setuptools.packages.find]
+include = ["handshake_mcp*"]
+exclude = ["tests*"]
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
+[tool.setuptools.package-data]
+handshake_mcp = ["py.typed"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.0.0",
+    "respx>=0.21.0",
+    "ruff>=0.11.0",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["handshake_mcp"]

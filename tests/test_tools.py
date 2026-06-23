@@ -1,30 +1,40 @@
-"""Tests for tool schema validity and dispatch routing."""
+"""Tests for FastMCP server and tool registration."""
 
-import pytest
-
-from handshake_mcp import tools
+from handshake_mcp.server import create_mcp_server
 
 
-def test_all_tools_have_unique_names():
-    names = [t.name for t in tools.ALL_TOOLS]
-    assert len(names) == len(set(names)), "Duplicate tool names detected"
+def test_server_creates_without_error():
+    mcp = create_mcp_server()
+    assert mcp is not None
 
 
-def test_all_tools_have_descriptions():
-    for tool in tools.ALL_TOOLS:
-        assert tool.description, f"{tool.name!r} is missing a description"
+def test_server_has_expected_tool_count():
+    mcp = create_mcp_server()
+    # 6 job tools + 2 employer + 2 application + 2 profile = 12
+    assert len(mcp._tool_manager._tools) == 12
 
 
-def test_all_tools_are_registered_in_dispatcher():
-    for tool in tools.ALL_TOOLS:
-        assert tool.name in tools._HANDLERS, f"No handler registered for {tool.name!r}"
+def test_all_tool_names_are_prefixed_hs():
+    mcp = create_mcp_server()
+    for name in mcp._tool_manager._tools:
+        assert name.startswith("hs_"), f"Tool {name!r} does not start with 'hs_'"
 
 
-def test_tool_count():
-    assert len(tools.ALL_TOOLS) == 12
-
-
-@pytest.mark.asyncio
-async def test_dispatch_unknown_tool_raises():
-    with pytest.raises(ValueError, match="Unknown tool"):
-        await tools.dispatch("not_a_real_tool", {})
+def test_expected_tools_are_registered():
+    mcp = create_mcp_server()
+    tools = set(mcp._tool_manager._tools.keys())
+    expected = {
+        "hs_search_jobs",
+        "hs_get_job",
+        "hs_apply",
+        "hs_save_job",
+        "hs_unsave_job",
+        "hs_get_saved_jobs",
+        "hs_search_employers",
+        "hs_get_employer",
+        "hs_get_applications",
+        "hs_withdraw_application",
+        "hs_get_profile",
+        "hs_get_documents",
+    }
+    assert tools == expected

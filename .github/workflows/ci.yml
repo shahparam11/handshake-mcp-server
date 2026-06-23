@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv sync
+          uv sync --group dev
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
+      - run: uv cache prune --ci
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - name: Run tests
+        run: uv run pytest --cov --cov-report=term-missing -v
+      - run: uv cache prune --ci

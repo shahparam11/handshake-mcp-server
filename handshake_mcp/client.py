@@ -1,8 +1,12 @@
 """Authenticated HTTP client for the Handshake internal API.
 
-All requests attach the saved session cookies. POST/DELETE requests also
+All requests attach the saved session cookies. POST / DELETE requests also
 reflect the CSRF-TOKEN cookie back as the X-CSRF-Token header, satisfying
 Handshake's double-submit CSRF protection.
+
+Endpoint base: https://app.joinhandshake.com/api/v1/
+Note: Handshake's internal API is undocumented. If an endpoint returns 404,
+open browser DevTools on Handshake → Network tab to find the correct path.
 """
 
 from typing import Any
@@ -28,9 +32,11 @@ _HEADERS = {
 
 
 def make_client() -> httpx.AsyncClient:
-    """Return an authenticated AsyncClient with saved session cookies."""
+    """Return an authenticated AsyncClient using saved session cookies."""
     cookies = load_cookies()
     headers = dict(_HEADERS)
+    # Handshake uses the double-submit CSRF pattern: reflect the cookie value
+    # back as a request header.
     csrf = cookies.get("CSRF-TOKEN") or cookies.get("csrf_token", "")
     if csrf:
         headers["X-CSRF-Token"] = csrf

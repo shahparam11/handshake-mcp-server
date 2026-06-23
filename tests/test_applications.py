@@ -1,10 +1,10 @@
-"""Tests for application tools."""
+"""Tests for application API calls."""
 
 import httpx
 import pytest
 import respx
 
-from handshake_mcp.tools import applications
+from handshake_mcp.client import api_get, api_post
 
 BASE = "https://app.joinhandshake.com/api/v1"
 
@@ -15,7 +15,7 @@ async def test_get_applications_no_filter():
     route = respx.get(f"{BASE}/job_applications").mock(
         return_value=httpx.Response(200, json={"results": [], "total": 0})
     )
-    await applications.handle("hs_get_applications", {})
+    await api_get("/job_applications", {"page": 1, "per_page": 25})
     assert route.called
 
 
@@ -25,7 +25,7 @@ async def test_get_applications_with_status_filter():
     route = respx.get(f"{BASE}/job_applications").mock(
         return_value=httpx.Response(200, json={"results": [], "total": 0})
     )
-    await applications.handle("hs_get_applications", {"status": "pending"})
+    await api_get("/job_applications", {"page": 1, "per_page": 25, "status": "pending"})
     assert "status=pending" in str(route.calls[0].request.url)
 
 
@@ -35,5 +35,5 @@ async def test_withdraw_application():
     route = respx.post(f"{BASE}/job_applications/77/withdraw").mock(
         return_value=httpx.Response(200, json={"ok": True})
     )
-    await applications.handle("hs_withdraw_application", {"application_id": "77"})
+    await api_post("/job_applications/77/withdraw")
     assert route.called
