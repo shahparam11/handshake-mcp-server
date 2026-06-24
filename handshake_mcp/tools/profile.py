@@ -4,7 +4,34 @@ from __future__ import annotations
 
 from fastmcp import FastMCP
 
-from ..client import api_get
+from ..client import gql
+
+_PROFILE_QUERY = """
+{
+  currentUser {
+    id
+    name
+    firstName
+    lastName
+    bio
+    headline
+    graduationDate
+    school { name }
+  }
+}
+"""
+
+_DOCUMENTS_QUERY = """
+{
+  currentUser {
+    documents {
+      id
+      name
+      createdAt
+    }
+  }
+}
+"""
 
 
 def register(mcp: FastMCP) -> None:
@@ -12,9 +39,10 @@ def register(mcp: FastMCP) -> None:
     async def hs_get_profile() -> dict:
         """Get your Handshake student profile.
 
-        Returns name, school, major, graduation year, and account status.
+        Returns name, school, bio, headline, and graduation date.
         """
-        return await api_get("/students/me")
+        data = await gql(_PROFILE_QUERY)
+        return data["currentUser"]
 
     @mcp.tool()
     async def hs_get_documents() -> dict:
@@ -22,4 +50,5 @@ def register(mcp: FastMCP) -> None:
 
         Use the returned document IDs when calling hs_apply to attach files.
         """
-        return await api_get("/documents")
+        data = await gql(_DOCUMENTS_QUERY)
+        return data["currentUser"]["documents"]

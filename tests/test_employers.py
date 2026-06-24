@@ -4,29 +4,37 @@ import httpx
 import pytest
 import respx
 
-from handshake_mcp.client import api_get
+from handshake_mcp.client import gql
 
-BASE = "https://app.joinhandshake.com/api/v1"
+GQL = "https://app.joinhandshake.com/hs/graphql"
+
+_MOCK_EMPLOYER = {
+    "id": "42",
+    "name": "TechCorp",
+    "description": "We build things.",
+    "website": "https://techcorp.example",
+    "location": {"name": "San Francisco, CA"},
+    "industry": {"name": "Software"},
+}
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_search_employers_passes_query():
-    route = respx.get(f"{BASE}/employers").mock(
-        return_value=httpx.Response(200, json={"results": [{"id": 1, "name": "Acme"}]})
+async def test_search_employers_calls_graphql():
+    route = respx.post(GQL).mock(
+        return_value=httpx.Response(200, json={"data": {"employers": [_MOCK_EMPLOYER]}})
     )
-    result = await api_get("/employers", {"query": "Acme"})
+    data = await gql("query SearchEmployers($limit: Int) { employers(limit: $limit) { id name } }", {"limit": 5})
     assert route.called
-    assert "query=Acme" in str(route.calls[0].request.url)
-    assert result["results"][0]["name"] == "Acme"
+    assert data["employers"][0]["name"] == "TechCorp"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_get_employer_by_id():
-    route = respx.get(f"{BASE}/employers/42").mock(
-        return_value=httpx.Response(200, json={"id": 42, "name": "TechCorp"})
+    route = respx.post(GQL).mock(
+        return_value=httpx.Response(200, json={"data": {"employer": _MOCK_EMPLOYER}})
     )
-    result = await api_get("/employers/42")
+    data = await gql("query GetEmployer($id: ID!) { employer(id: $id) { id name } }", {"id": "42"})
     assert route.called
-    assert result["id"] == 42
+    assert data["employer"]["id"] == "42"

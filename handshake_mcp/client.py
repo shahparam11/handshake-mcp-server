@@ -4,7 +4,8 @@ All requests attach the saved session cookies. POST / DELETE requests also
 reflect the CSRF-TOKEN cookie back as the X-CSRF-Token header, satisfying
 Handshake's double-submit CSRF protection.
 
-Endpoint base: https://app.joinhandshake.com/api/v1/
+Endpoint base: https://app.joinhandshake.com/stu/
+GraphQL endpoint: https://app.joinhandshake.com/hs/graphql
 Note: Handshake's internal API is undocumented. If an endpoint returns 404,
 open browser DevTools on Handshake → Network tab to find the correct path.
 """
@@ -16,7 +17,8 @@ import httpx
 from .auth import load_cookies
 
 BASE_URL = "https://app.joinhandshake.com"
-API_BASE = f"{BASE_URL}/api/v1"
+API_BASE = f"{BASE_URL}/stu"
+GQL_URL = f"{BASE_URL}/hs/graphql"
 
 _HEADERS = {
     "User-Agent": (
@@ -67,3 +69,18 @@ async def api_delete(path: str) -> Any:
         r = await c.delete(f"{API_BASE}{path}")
         r.raise_for_status()
         return r.json() if r.content else {"ok": True}
+
+
+async def gql(query: str, variables: dict | None = None) -> Any:
+    """Execute a GraphQL query against Handshake's /hs/graphql endpoint."""
+    async with make_client() as c:
+        r = await c.post(
+            GQL_URL,
+            json={"query": query, "variables": variables or {}},
+            headers={"Content-Type": "application/json"},
+        )
+        r.raise_for_status()
+        payload = r.json()
+        if errors := payload.get("errors"):
+            raise RuntimeError(errors[0]["message"])
+        return payload.get("data")

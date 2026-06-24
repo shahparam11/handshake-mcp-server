@@ -88,7 +88,7 @@ handshake-mcp --version  # print version
 
 ## How it works
 
-On `--login`, a Patchright Chromium browser opens. After you log in, the full browser profile (cookies, localStorage, IndexedDB) is saved to `~/.handshake-mcp/`. Subsequent tool calls use these cookies via an `httpx` client against Handshake's internal REST API at `app.joinhandshake.com/api/v1/`.
+On `--login`, a Patchright Chromium browser opens. After you log in, the full browser profile (cookies, localStorage, IndexedDB) is saved to `~/.handshake-mcp/`. Subsequent tool calls use these cookies via an `httpx` client against Handshake's internal REST API at `app.joinhandshake.com/stu/`.
 
 CSRF protection uses the **double-submit cookie** pattern — the `CSRF-TOKEN` cookie value is reflected back as the `X-CSRF-Token` request header.
 

@@ -4,36 +4,56 @@ from __future__ import annotations
 
 from fastmcp import FastMCP
 
-from ..client import api_get
+from ..client import gql
+
+_EMPLOYER_FIELDS = """
+  id
+  name
+  description
+  website
+  location { name }
+  industry { name }
+"""
+
+_SEARCH_QUERY = """
+query SearchEmployers($limit: Int) {
+  employers(limit: $limit) {
+    """ + _EMPLOYER_FIELDS + """
+  }
+}
+"""
+
+_GET_EMPLOYER_QUERY = """
+query GetEmployer($id: ID!) {
+  employer(id: $id) {
+    """ + _EMPLOYER_FIELDS + """
+  }
+}
+"""
 
 
 def register(mcp: FastMCP) -> None:
     @mcp.tool()
-    async def hs_search_employers(
-        query: str,
-        page: int = 1,
-        per_page: int = 25,
-    ) -> dict:
-        """Search for companies/employers on Handshake.
+    async def hs_search_employers(limit: int = 25) -> dict:
+        """Browse employers on Handshake.
+
+        Returns employers visible to your account. Use hs_get_employer
+        for full details on a specific company.
 
         Args:
-            query: Company name or industry keyword.
-            page: Page number (starts at 1).
-            per_page: Results per page.
+            limit: Number of employers to return (max 100).
         """
-        return await api_get(
-            "/employers",
-            {"query": query, "page": page, "per_page": per_page},
-        )
+        data = await gql(_SEARCH_QUERY, {"limit": min(limit, 100)})
+        return {"employers": data["employers"]}
 
     @mcp.tool()
     async def hs_get_employer(employer_id: str) -> dict:
         """Get a company's Handshake profile.
 
-        Includes description, industry, employee count, open job count,
-        and active postings.
+        Includes description, industry, location, and website.
 
         Args:
             employer_id: Employer ID from hs_search_employers results.
         """
-        return await api_get(f"/employers/{employer_id}")
+        data = await gql(_GET_EMPLOYER_QUERY, {"id": employer_id})
+        return data["employer"]

@@ -10,6 +10,7 @@ Profile layout:
   └── cookies.json      ← exported cookies snapshot (used by the httpx client)
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -67,10 +68,8 @@ async def run_login() -> None:
     print("║        Handshake MCP — Login                 ║")
     print("╚══════════════════════════════════════════════╝")
     print()
-    print("Steps:")
-    print("  1. A browser will open — log in to Handshake.")
-    print("  2. Wait until your dashboard / job feed loads.")
-    print("  3. Come back here and press Enter.")
+    print("A browser will open — log in to Handshake.")
+    print("Once your student dashboard loads, session is saved automatically.")
     print()
 
     async with async_playwright() as pw:
@@ -84,8 +83,25 @@ async def run_login() -> None:
         page = ctx.pages[0] if ctx.pages else await ctx.new_page()
         await page.goto(_LOGIN_URL, wait_until="domcontentloaded")
 
-        input(">>> Press Enter after you are fully logged in to Handshake... ")
+        print("Waiting for you to log in to Handshake in the browser...")
+        print("(auto-detects when your student dashboard loads — no Enter needed)")
 
+        # Wait specifically for the student dashboard URL (/stu/).
+        # SSO/OAuth flows pass through many intermediate redirects before
+        # reaching it — we must not trigger on those interim URLs.
+        for _ in range(300):  # up to 5 minutes
+            await asyncio.sleep(1)
+            current = page.url
+            if "joinhandshake.com" in current and "/stu" in current:
+                break
+        else:
+            print("\nTimed out waiting for dashboard. Try again.")
+            await ctx.close()
+            sys.exit(1)
+
+        print(f"Dashboard detected: {page.url}")
+        print("Saving session...")
+        await asyncio.sleep(3)  # let post-login XHRs and cookie updates settle
         cookies = await ctx.cookies([_APP_ORIGIN])
         await ctx.close()
 
@@ -120,22 +136,22 @@ async def run_logout() -> None:
 async def run_status() -> None:
     """Check whether the saved session is still valid."""
     if not COOKIES_FILE.exists():
-        print("✗ Not logged in (no cookies.json found).")
+        print("[X] Not logged in (no cookies.json found).")
         print("  Run:  handshake-mcp --login")
         return
 
     from .client import api_get
 
     try:
-        data = await api_get("/students/me")
+        data = await api_get("/users/me")
         name = (
             data.get("name")
             or f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
             or "unknown"
         )
-        print(f"✓ Logged in as: {name}")
+        print(f"[OK] Logged in as: {name}")
         if school := data.get("primary_education", {}).get("school", {}).get("name"):
-            print(f"  School: {school}")
+            print(f"     School: {school}")
     except Exception as exc:
-        print(f"✗ Session invalid: {exc}")
-        print("  Re-run:  handshake-mcp --login")
+        print(f"[X] Session invalid: {exc}")
+        print("    Re-run:  handshake-mcp --login")
